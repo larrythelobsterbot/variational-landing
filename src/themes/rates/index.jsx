@@ -1194,6 +1194,48 @@ function HowItWorks() {
 }
 
 /* ═════════════════════════════════════════════════════════════════════
+   8b. TOOL LINKS
+   ═════════════════════════════════════════════════════════════════════ */
+function ToolLinks() {
+  const linkStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "10px 20px",
+    border: `1px solid ${THEME.borderColor}`,
+    background: "transparent",
+    color: THEME.muted,
+    fontFamily: FONTS.mono,
+    fontSize: "0.78rem",
+    textDecoration: "none",
+    transition: "all 0.2s",
+  };
+
+  return (
+    <section style={{ padding: "0 0 24px", textAlign: "center" }}>
+      <div style={{ ...container, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+        <a
+          href="/compare"
+          style={linkStyle}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#FFB800"; e.currentTarget.style.color = "#FFB800"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = THEME.borderColor; e.currentTarget.style.color = THEME.muted; }}
+        >
+          Compare All DEXs &rarr;
+        </a>
+        <a
+          href="/liquidations"
+          style={linkStyle}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#00FF41"; e.currentTarget.style.color = "#00FF41"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = THEME.borderColor; e.currentTarget.style.color = THEME.muted; }}
+        >
+          Liquidation Monitor &rarr;
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ═════════════════════════════════════════════════════════════════════
    9. CTA FOOTER
    ═════════════════════════════════════════════════════════════════════ */
 function CTAFooter() {
@@ -1336,6 +1378,7 @@ export default function RatesTheme() {
       <EarningsCalculator opportunities={opportunities} />
       <HistoricalChart opportunities={opportunities} />
       <HowItWorks />
+      <ToolLinks />
       <CTAFooter />
       <Disclaimer />
       <Footer theme={THEME} />

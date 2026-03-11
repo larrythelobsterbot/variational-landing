@@ -963,6 +963,50 @@ function WhyVariational() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   TOOL CROSS-LINKS
+   ═══════════════════════════════════════════════════════════════════════ */
+function ToolCrossLinks() {
+  const linkStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "10px 20px",
+    border: `1px solid ${THEME.borderColor}`,
+    background: `${THEME.accent}08`,
+    color: THEME.text,
+    fontFamily: FONTS.mono,
+    fontSize: "0.75rem",
+    fontWeight: 500,
+    textDecoration: "none",
+    letterSpacing: "0.04em",
+    transition: "border-color 0.2s, background 0.2s",
+  };
+
+  return (
+    <section style={{ padding: "16px 0 8px" }}>
+      <div style={{ ...container, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+        <a
+          href="/rates"
+          style={linkStyle}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = THEME.accent; e.currentTarget.style.background = `${THEME.accent}15`; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = THEME.borderColor; e.currentTarget.style.background = `${THEME.accent}08`; }}
+        >
+          <span style={{ color: THEME.accent }}>&#9679;</span> Funding Rate Arb &rarr;
+        </a>
+        <a
+          href="/liquidations"
+          style={linkStyle}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#00FF41"; e.currentTarget.style.background = "#00FF4115"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = THEME.borderColor; e.currentTarget.style.background = `${THEME.accent}08`; }}
+        >
+          <span style={{ color: "#00FF41" }}>&#9679;</span> Liquidation Monitor &rarr;
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    CTA SECTION
    ═══════════════════════════════════════════════════════════════════════ */
 function CTASection() {
@@ -1110,6 +1154,7 @@ export default function CompareTheme() {
       <VolumeChart protocols={protocols} />
       <WhyVariational />
       <CTASection />
+      <ToolCrossLinks />
       <CompareFooter />
     </div>
   );

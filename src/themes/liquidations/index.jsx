@@ -134,8 +134,21 @@ function injectKeyframes() {
   document.head.appendChild(style);
 }
 
+/* ── Normalize API levels to frontend format ─────────────── */
+function normalizeLevels(levels) {
+  if (!Array.isArray(levels)) return [];
+  return levels.map((l) => ({
+    leverage: l.leverage,
+    long_liq_price: l.long_liquidation ?? l.long_liq_price ?? 0,
+    short_liq_price: l.short_liquidation ?? l.short_liq_price ?? 0,
+    long_distance_pct: l.long_distance_pct ?? 0,
+    short_distance_pct: l.short_distance_pct ?? 0,
+  }));
+}
+
 /* ── Format helpers ───────────────────────────────────────── */
 function formatPrice(price) {
+  if (price == null || isNaN(price)) return "---";
   if (price >= 1000)
     return price.toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -146,12 +159,14 @@ function formatPrice(price) {
 }
 
 function formatOI(oi) {
+  if (oi == null || isNaN(oi)) return "---";
   if (oi >= 1e9) return `$${(oi / 1e9).toFixed(2)}B`;
   if (oi >= 1e6) return `$${(oi / 1e6).toFixed(1)}M`;
   return `$${oi.toLocaleString()}`;
 }
 
 function formatFundingRate(rate) {
+  if (rate == null || isNaN(rate)) return "---";
   const annualized = rate * 365 * 100;
   const sign = annualized >= 0 ? "+" : "";
   return `${sign}${annualized.toFixed(2)}%`;
@@ -183,7 +198,10 @@ function useAssetLevels(coin) {
         if (!res.ok) throw new Error("API error");
         const json = await res.json();
         if (!cancelled) {
-          setData(json);
+          setData({
+            ...json,
+            levels: normalizeLevels(json.levels),
+          });
           setError(null);
         }
       } catch (err) {
@@ -530,7 +548,7 @@ function LiquidationGauge({ levels, markPrice }) {
               >
                 ${formatPrice(level.long_liq_price)}
                 <span style={{ color: `${color}88`, marginLeft: 4 }}>
-                  {level.long_distance_pct.toFixed(1)}%
+                  {(level.long_distance_pct ?? 0).toFixed(1)}%
                 </span>
               </div>
 
@@ -561,7 +579,7 @@ function LiquidationGauge({ levels, markPrice }) {
               >
                 ${formatPrice(level.short_liq_price)}
                 <span style={{ color: `${color}88`, marginLeft: 4 }}>
-                  +{level.short_distance_pct.toFixed(1)}%
+                  +{(level.short_distance_pct ?? 0).toFixed(1)}%
                 </span>
               </div>
             </div>
@@ -690,7 +708,7 @@ function LiquidationGaugeMobile({ levels, markPrice }) {
                 ${formatPrice(level.long_liq_price)}
               </div>
               <div style={{ fontFamily: FONTS.body, fontSize: "0.6rem", color: `${color}88` }}>
-                {level.long_distance_pct.toFixed(1)}%
+                {(level.long_distance_pct ?? 0).toFixed(1)}%
               </div>
             </div>
 
@@ -720,7 +738,7 @@ function LiquidationGaugeMobile({ levels, markPrice }) {
                 ${formatPrice(level.short_liq_price)}
               </div>
               <div style={{ fontFamily: FONTS.body, fontSize: "0.6rem", color: `${color}88` }}>
-                +{level.short_distance_pct.toFixed(1)}%
+                +{(level.short_distance_pct ?? 0).toFixed(1)}%
               </div>
             </div>
           </div>
@@ -866,13 +884,13 @@ function LeverageTable({ levels, markPrice }) {
                     ${formatPrice(level.long_liq_price)}
                   </td>
                   <td style={{ ...tdStyle, color: THEME.accent + "aa" }}>
-                    {level.long_distance_pct.toFixed(2)}%
+                    {(level.long_distance_pct ?? 0).toFixed(2)}%
                   </td>
                   <td style={{ ...tdStyle, color: THEME.red }}>
                     ${formatPrice(level.short_liq_price)}
                   </td>
                   <td style={{ ...tdStyle, color: THEME.red + "aa" }}>
-                    +{level.short_distance_pct.toFixed(2)}%
+                    +{(level.short_distance_pct ?? 0).toFixed(2)}%
                   </td>
                 </tr>
               );
@@ -1159,6 +1177,43 @@ function MarketingCallout() {
       >
         Trade Privately on Variational &rarr;
       </a>
+      <div
+        style={{
+          marginTop: 20,
+          display: "flex",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <a
+          href="/rates"
+          style={{
+            fontFamily: FONTS.body,
+            fontSize: "0.75rem",
+            color: THEME.muted,
+            textDecoration: "none",
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#22c55e"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = THEME.muted; }}
+        >
+          {">"} Funding Rate Arb
+        </a>
+        <a
+          href="/compare"
+          style={{
+            fontFamily: FONTS.body,
+            fontSize: "0.75rem",
+            color: THEME.muted,
+            textDecoration: "none",
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#FFB800"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = THEME.muted; }}
+        >
+          {">"} DEX Compare Tool
+        </a>
+      </div>
     </div>
   );
 }
