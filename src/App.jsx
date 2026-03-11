@@ -7,6 +7,8 @@ const Terminal = lazy(() => import("./themes/terminal/index.jsx"));
 const Bloomberg = lazy(() => import("./themes/bloomberg/index.jsx"));
 const Neon = lazy(() => import("./themes/neon/index.jsx"));
 const Rates = lazy(() => import("./themes/rates/index.jsx"));
+const Compare = lazy(() => import("./themes/compare/index.jsx"));
+const Liquidations = lazy(() => import("./themes/liquidations/index.jsx"));
 
 function Loading() {
   return (
@@ -37,6 +39,8 @@ export default function App() {
           <Route path="/bloomberg" element={<Bloomberg />} />
           <Route path="/neon" element={<Neon />} />
           <Route path="/rates" element={<Rates />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/liquidations" element={<Liquidations />} />
         </Routes>
       </Suspense>
       <ThemeSwitcher />

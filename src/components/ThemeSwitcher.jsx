@@ -1,20 +1,34 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const THEMES = [
-  { path: "/", label: "Original", color: "#60a5fa" },
-  { path: "/terminal", label: "Terminal", color: "#00ff88" },
-  { path: "/bloomberg", label: "Bloomberg", color: "#fbbf24" },
-  { path: "/neon", label: "Neon", color: "#818cf8" },
-  { path: "/rates", label: "Rates", color: "#22c55e" },
+const SECTIONS = [
+  {
+    label: "Themes",
+    items: [
+      { path: "/", label: "Original", color: "#60a5fa" },
+      { path: "/terminal", label: "Terminal", color: "#00ff88" },
+      { path: "/bloomberg", label: "Bloomberg", color: "#fbbf24" },
+      { path: "/neon", label: "Neon", color: "#818cf8" },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { path: "/rates", label: "Funding Rates", color: "#22c55e" },
+      { path: "/compare", label: "DEX Compare", color: "#FFB800" },
+      { path: "/liquidations", label: "Liquidations", color: "#00FF41" },
+    ],
+  },
 ];
+
+const ALL_ITEMS = SECTIONS.flatMap((s) => s.items);
 
 export default function ThemeSwitcher() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const current = THEMES.find((t) => t.path === location.pathname) || THEMES[0];
+  const current = ALL_ITEMS.find((t) => t.path === location.pathname) || ALL_ITEMS[0];
 
   return (
     <div
@@ -40,56 +54,81 @@ export default function ThemeSwitcher() {
             display: "flex",
             flexDirection: "column",
             gap: 2,
-            minWidth: 140,
+            minWidth: 160,
             boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
           }}
         >
-          {THEMES.map((t) => {
-            const isActive = t.path === location.pathname;
-            return (
-              <button
-                key={t.path}
-                onClick={() => {
-                  navigate(t.path);
-                  setOpen(false);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 12px",
-                  background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
-                  border: "none",
-                  borderRadius: 8,
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                  fontSize: "0.82rem",
-                  fontWeight: isActive ? 600 : 400,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  width: "100%",
-                  transition: "background 0.15s",
-                  fontFamily: "inherit",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.target.style.background = "rgba(255,255,255,0.05)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.target.style.background = "transparent";
-                }}
-              >
-                <span
+          {SECTIONS.map((section, si) => (
+            <div key={section.label}>
+              {si > 0 && (
+                <div
                   style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: t.color,
-                    flexShrink: 0,
+                    height: 1,
+                    background: "rgba(255,255,255,0.08)",
+                    margin: "4px 8px",
                   }}
                 />
-                {t.label}
-              </button>
-            );
-          })}
+              )}
+              <div
+                style={{
+                  padding: "6px 12px 2px",
+                  fontSize: "0.62rem",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.3)",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {section.label}
+              </div>
+              {section.items.map((t) => {
+                const isActive = t.path === location.pathname;
+                return (
+                  <button
+                    key={t.path}
+                    onClick={() => {
+                      navigate(t.path);
+                      setOpen(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 12px",
+                      background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                      border: "none",
+                      borderRadius: 8,
+                      color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
+                      fontSize: "0.82rem",
+                      fontWeight: isActive ? 600 : 400,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                      transition: "background 0.15s",
+                      fontFamily: "inherit",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.target.style.background = "rgba(255,255,255,0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) e.target.style.background = "transparent";
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: t.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
 
