@@ -260,7 +260,7 @@ function fmtVolume(val) {
 }
 
 function exchangeAbbr(name) {
-  const map = { binance: "BIN", bybit: "BYB", hyperliquid: "HL", okx: "OKX", gateio: "GATE", bitget: "BGT" };
+  const map = { binance: "BIN", bybit: "BYB", hyperliquid: "HL", okx: "OKX", gateio: "GATE", bitget: "BGT", tradexyz: "XYZ", hyena: "HYNA", lighter: "LGTR", edgex: "EDGX" };
   return map[(name || "").toLowerCase()] || name.toUpperCase().slice(0, 3);
 }
 
@@ -515,7 +515,7 @@ function OpportunitiesTable({ opportunities }) {
     { key: "ticker", label: "ASSET", sortable: true },
     { key: "volume_24h", label: "VAR VOL", sortable: true },
     { key: "var_rate_annual", label: "VAR RATE", sortable: true },
-    { key: "cex_exchange", label: "BEST CEX", sortable: false },
+    { key: "cex_exchange", label: "BEST RATE", sortable: false },
     { key: "cex_rate_annual", label: "CEX RATE", sortable: true },
     { key: "spread_annual", label: "SPREAD", sortable: true },
     { key: "direction", label: "DIRECTION", sortable: false },
