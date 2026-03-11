@@ -603,7 +603,7 @@ function ComparisonTable({ protocols }) {
         return (
           <span style={{ fontFamily: FONTS.mono, fontSize: "0.82rem" }}>
             {val != null
-              ? String(val).includes("%") ? val : `${val}%`
+              ? String(val).includes("%") || isNaN(parseFloat(val)) ? val : `${val}%`
               : "\u2014"}
           </span>
         );
