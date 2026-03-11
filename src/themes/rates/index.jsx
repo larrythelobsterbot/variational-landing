@@ -251,8 +251,16 @@ function fmtDollar(val) {
   return `$${val.toFixed(2)}`;
 }
 
+function fmtVolume(val) {
+  if (!val || val === 0) return "\u2014";
+  if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
+  if (val >= 1e6) return `$${(val / 1e6).toFixed(1)}M`;
+  if (val >= 1e3) return `$${(val / 1e3).toFixed(0)}K`;
+  return `$${val.toFixed(0)}`;
+}
+
 function exchangeAbbr(name) {
-  const map = { binance: "BIN", bybit: "BYB", hyperliquid: "HL" };
+  const map = { binance: "BIN", bybit: "BYB", hyperliquid: "HL", okx: "OKX", gateio: "GATE", bitget: "BGT" };
   return map[(name || "").toLowerCase()] || name.toUpperCase().slice(0, 3);
 }
 
@@ -505,6 +513,7 @@ function OpportunitiesTable({ opportunities }) {
 
   const columns = [
     { key: "ticker", label: "ASSET", sortable: true },
+    { key: "volume_24h", label: "VAR VOL", sortable: true },
     { key: "var_rate_annual", label: "VAR RATE", sortable: true },
     { key: "cex_exchange", label: "BEST CEX", sortable: false },
     { key: "cex_rate_annual", label: "CEX RATE", sortable: true },
@@ -560,7 +569,7 @@ function OpportunitiesTable({ opportunities }) {
           <table
             style={{
               width: "100%",
-              minWidth: 900,
+              minWidth: 1000,
               borderCollapse: "collapse",
               borderSpacing: 0,
             }}
@@ -588,6 +597,9 @@ function OpportunitiesTable({ opportunities }) {
                   <tr key={row.ticker + idx} style={{ background: rowBg }}>
                     <td style={{ ...tdBase, fontWeight: 700, color: THEME.text }}>
                       {row.ticker}
+                    </td>
+                    <td style={{ ...tdBase, color: THEME.muted, fontSize: "0.72rem" }}>
+                      {fmtVolume(row.volume_24h)}
                     </td>
                     <td style={{ ...tdBase, color: row.var_rate_annual >= 0 ? THEME.positive : THEME.negative }}>
                       {fmtRate(row.var_rate_annual)}
