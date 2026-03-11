@@ -575,7 +575,7 @@ export default function NeonTheme() {
             maxWidth: 600,
           }}
         >
-          Hypothetical values based on 100 points, 50% community allocation, and 9.5M total points at TGE.
+          Hypothetical values based on 100 points, ~10% community allocation, and 9.5M total points at TGE.
         </p>
 
         <div

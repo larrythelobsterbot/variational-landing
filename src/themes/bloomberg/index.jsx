@@ -384,7 +384,7 @@ function ValuationScenarios() {
             marginBottom: 28,
           }}
         >
-          Estimated value per point based on 50% community token allocation and
+          Estimated value per point based on ~10% community token allocation and
           ~{(totalPointsEst / 1_000_000).toFixed(1)}M estimated total points at TGE.
           These are speculative scenarios, not guarantees.
         </p>

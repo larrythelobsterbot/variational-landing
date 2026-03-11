@@ -17,7 +17,7 @@ export const MARKET_DATA = {
     markets: "~500",
     refunded: "$4M+",
     raised: "$11.8M",
-    communityAllocation: "50%",
+    communityAllocation: "~10%",
     fdv: "Pre-TGE",
     tradingFees: "0.00% (permanent)",
     executionPrivacy: "Full stealth (private RFQ)",

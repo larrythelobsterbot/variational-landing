@@ -806,7 +806,7 @@ export default function TerminalTheme() {
               color: THEME.accent,
             }}
           >
-            <span style={{ color: THEME.secondary }}>[INFO]</span> 50% of
+            <span style={{ color: THEME.secondary }}>[INFO]</span> ~10% of
             tokens allocated to community. {weeksRemaining} weeks remaining
             before TGE.
           </div>
@@ -884,7 +884,7 @@ export default function TerminalTheme() {
               marginBottom: 24,
             }}
           >
-            50% community allocation | $11.8M raised | Pre-TGE
+            ~10% community allocation | $11.8M raised | Pre-TGE
           </p>
           <CTAButton href={REFERRAL_LINK} large>
             [ INITIALIZE TRADING ] {"\u2192"}

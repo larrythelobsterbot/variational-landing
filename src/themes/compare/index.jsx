@@ -143,7 +143,13 @@ function useCompareData() {
         const summaryData = await summaryRes.json();
 
         if (!cancelled) {
-          setProtocols(protocolData.protocols || []);
+          // Normalize: API returns display_name, frontend uses name
+          setProtocols(
+            (protocolData.protocols || []).map((p) => ({
+              ...p,
+              name: p.display_name || p.name || p.slug,
+            }))
+          );
           setSummary(summaryData);
           setLastUpdated(protocolData.last_updated || attemptTime);
           setError(null);
@@ -596,7 +602,9 @@ function ComparisonTable({ protocols }) {
       case "community_allocation":
         return (
           <span style={{ fontFamily: FONTS.mono, fontSize: "0.82rem" }}>
-            {val != null ? `${val}%` : "\u2014"}
+            {val != null
+              ? String(val).includes("%") ? val : `${val}%`
+              : "\u2014"}
           </span>
         );
       case "token_status":
@@ -879,8 +887,8 @@ function WhyVariational() {
       detail: "$4M+ returned to traders since genesis",
     },
     {
-      label: "~50% Community Allocation",
-      detail: "Highest token community share in class",
+      label: "~10% Community Allocation",
+      detail: "VAR token with significant community distribution",
     },
     {
       label: "~500 Tradable Markets",
