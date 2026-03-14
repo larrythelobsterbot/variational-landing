@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
+import CopyCode from "../../components/CopyCode.jsx";
+import ToolButtons from "../../components/ToolButtons.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -132,9 +134,9 @@ function fmtCurrency(n) {
   return `$${n.toFixed(2)}`;
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    TOP BAR
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function TopBar() {
   const bar = {
     position: "sticky",
@@ -187,12 +189,12 @@ function TopBar() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    SCROLLING TICKER
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function TickerBar() {
   const content =
-    "BTC/USDT 0% FEE \u2022 ETH/USDT 0% FEE \u2022 SOL/USDT 0% FEE \u2022 $175B+ VOLUME \u2022 500+ MARKETS \u2022 $4M+ REFUNDED \u2022 ";
+    "BTC/USDT 0% FEE • ETH/USDT 0% FEE • SOL/USDT 0% FEE • $175B+ VOLUME • 500+ MARKETS • $4M+ REFUNDED • ";
 
   const track = {
     overflow: "hidden",
@@ -224,9 +226,9 @@ function TickerBar() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    HERO SECTION
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function Hero() {
   const v = MARKET_DATA.variational;
 
@@ -277,16 +279,19 @@ function Hero() {
           swaps at deterministic pricing with zero fees and zero slippage. Institutional-grade
           infrastructure, open to all participants. Loss refund protocol active since genesis.
         </p>
-        <a
-          href={REFERRAL_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={ctaButton}
-          onMouseEnter={(e) => { e.currentTarget.style.background = THEME.secondary; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = THEME.accent; }}
-        >
-          START TRADING &rarr;
-        </a>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          <a
+            href={REFERRAL_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={ctaButton}
+            onMouseEnter={(e) => { e.currentTarget.style.background = THEME.secondary; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = THEME.accent; }}
+          >
+            START TRADING &rarr;
+          </a>
+          <ToolButtons theme={THEME} fonts={FONTS} layout="row" />
+        </div>
 
         {/* Stats row */}
         <div
@@ -340,9 +345,9 @@ function Hero() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    COMPETITIVE ANALYSIS
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function CompetitiveAnalysis() {
   return (
     <section style={{ padding: "56px 0", borderBottom: `1px solid ${THEME.muted}22` }}>
@@ -355,9 +360,9 @@ function CompetitiveAnalysis() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    TOKEN VALUATION SCENARIOS
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function ValuationScenarios() {
   const scenarios = [
     { fdvLabel: "$500M FDV", fdv: 500_000_000, tag: "Conservative" },
@@ -367,7 +372,7 @@ function ValuationScenarios() {
   ];
 
   const totalPointsEst = POINTS_DATA.estimatedTotalAtTGE;
-  const communityFraction = 0.5;
+  const communityFraction = 0.1; // ~10% community allocation
 
   return (
     <section style={{ padding: "56px 0", borderBottom: `1px solid ${THEME.muted}22` }}>
@@ -487,9 +492,9 @@ function ValuationScenarios() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    AIRDROP CALCULATOR
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function Calculator() {
   return (
     <section
@@ -513,9 +518,9 @@ function Calculator() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    EXECUTION PROTOCOL (Getting Started)
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function ExecutionProtocol() {
   const steps = [
     {
@@ -602,9 +607,9 @@ function ExecutionProtocol() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    REFERENCE BAR
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function ReferenceBar() {
   const items = [
     { label: "HYPE FDV", value: "~$29B" },
@@ -664,9 +669,9 @@ function ReferenceBar() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    FOOTER CTA
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 function FooterCTA() {
   const weeksRemaining = getWeeksRemaining();
 
@@ -735,9 +740,9 @@ function FooterCTA() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    MAIN PAGE EXPORT
-   ═════════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
 export default function BloombergTheme() {
   const [ready, setReady] = useState(false);
 
