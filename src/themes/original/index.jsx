@@ -1,7 +1,9 @@
-import { useEffect } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
+import CopyCode from "../../components/CopyCode.jsx";
+import ToolButtons from "../../components/ToolButtons.jsx";
+import SocialProof from "../../components/SocialProof.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -111,19 +113,19 @@ const TIERS = [
 const FEATURES = [
   {
     title: "Private Execution",
-    desc: "Every trade is executed through a private RFQ engine. No one sees your orders.",
+    desc: "Every trade is executed through a private RFQ engine. No one sees your orders. No front-running, ever.",
   },
   {
     title: "Zero Slippage",
-    desc: "Block trades at deterministic prices. No sweeping the order book.",
+    desc: "Block trades at deterministic prices. No sweeping the order book. Your quoted price is your fill price.",
   },
   {
     title: "Zero Trading Fees",
-    desc: "0.00% trading fees, permanently. Not a promo \u2014 it\u2019s the protocol.",
+    desc: "0.00% trading fees, permanently. Not a promo — it's baked into the protocol architecture.",
   },
   {
     title: "Loss Refund Protocol",
-    desc: "Unique program that refunds trading losses. $4M+ refunded to date.",
+    desc: "The only protocol that actively refunds trading losses. $4M+ already returned to traders.",
   },
 ];
 
@@ -133,7 +135,7 @@ const STEPS = [
   {
     step: 1,
     title: "Bridge to Arbitrum",
-    desc: "Use the official bridge or a third-party bridge to move funds to Arbitrum.",
+    desc: "Use the official bridge or a third-party bridge to move USDC/ETH to Arbitrum.",
   },
   {
     step: 2,
@@ -143,7 +145,7 @@ const STEPS = [
   {
     step: 3,
     title: "Trade & Accumulate Points",
-    desc: "Trade any of 500+ markets. Earn points toward the $VAR airdrop.",
+    desc: "Trade any of 500+ markets. Every dollar of volume earns points toward the $VAR airdrop.",
   },
 ];
 
@@ -159,17 +161,6 @@ const STATS = [
 /* ---------- Component ---------- */
 
 export default function OriginalTheme() {
-  useEffect(() => {
-    if (!document.getElementById("var-original-fonts")) {
-      const link = document.createElement("link");
-      link.id = "var-original-fonts";
-      link.rel = "stylesheet";
-      link.href =
-        "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap";
-      document.head.appendChild(link);
-    }
-  }, []);
-
   const weeksLeft = getWeeksRemaining();
 
   return (
@@ -188,7 +179,7 @@ export default function OriginalTheme() {
       }}
     >
       {/* ===== HERO ===== */}
-      <section style={{ ...section, paddingTop: 100, paddingBottom: 60 }}>
+      <section style={{ ...section, paddingTop: 60, paddingBottom: 60 }}>
         <div style={sectionLabel}>// Peer-to-peer derivatives protocol</div>
 
         <h1
@@ -218,7 +209,7 @@ export default function OriginalTheme() {
           fees, and zero slippage. No order book. No front-running.
         </p>
 
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <a
             href={REFERRAL_LINK}
             target="_blank"
@@ -249,6 +240,7 @@ export default function OriginalTheme() {
           >
             Airdrop Calculator ↓
           </a>
+          <ToolButtons theme={THEME} fonts={FONTS} layout="row" />
         </div>
 
         {/* Stats bar */}
@@ -257,7 +249,7 @@ export default function OriginalTheme() {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
             gap: 24,
-            marginTop: 64,
+            marginTop: 56,
             padding: "28px 0",
             borderTop: `1px solid ${THEME.muted}22`,
             borderBottom: `1px solid ${THEME.muted}22`,
@@ -290,14 +282,30 @@ export default function OriginalTheme() {
             </div>
           ))}
         </div>
+
+        {/* Social proof */}
+        <SocialProof theme={THEME} fonts={FONTS} />
       </section>
 
       {/* ===== WHY VARIATIONAL ===== */}
       <section style={section}>
         <div style={sectionLabel}>// Why Variational</div>
-        <h2 style={{ ...sectionHeading, marginBottom: 40 }}>
+        <h2 style={{ ...sectionHeading, marginBottom: 12 }}>
           Built different from every other perp DEX
         </h2>
+        <p
+          style={{
+            fontSize: "0.95rem",
+            color: `${THEME.text}99`,
+            lineHeight: 1.6,
+            maxWidth: 600,
+            marginBottom: 32,
+          }}
+        >
+          While other DEXs use public order books where your positions are visible
+          to everyone, Variational's private RFQ engine means no one can see your
+          trades, copy them, or front-run them.
+        </p>
 
         <div
           style={{
@@ -417,25 +425,11 @@ export default function OriginalTheme() {
               </h3>
               {s.showCode ? (
                 <div>
-                  <div
-                    style={{
-                      fontFamily: FONTS.mono,
-                      fontSize: "clamp(1rem, 2.5vw, 1.3rem)",
-                      fontWeight: 700,
-                      color: THEME.accent,
-                      background: `${THEME.accent}12`,
-                      border: `1px solid ${THEME.accent}33`,
-                      borderRadius: 8,
-                      padding: "14px 18px",
-                      textAlign: "center",
-                      letterSpacing: "0.08em",
-                      marginTop: 4,
-                      userSelect: "all",
-                      wordBreak: "break-all",
-                    }}
-                  >
-                    {REFERRAL_CODE}
-                  </div>
+                  <CopyCode
+                    code={REFERRAL_CODE}
+                    theme={THEME}
+                    fonts={FONTS}
+                  />
                   <div
                     style={{
                       fontSize: "0.78rem",
@@ -444,7 +438,7 @@ export default function OriginalTheme() {
                       textAlign: "center",
                     }}
                   >
-                    Use this access code when you connect
+                    Click to copy — use this access code when you connect
                   </div>
                 </div>
               ) : (
@@ -584,7 +578,7 @@ export default function OriginalTheme() {
         </div>
       </section>
 
-      {/* ===== FOOTER CTA ===== */}
+      {/* ===== URGENCY + FOOTER CTA ===== */}
       <section
         style={{
           ...section,
@@ -592,42 +586,64 @@ export default function OriginalTheme() {
           paddingBottom: 40,
         }}
       >
+        {/* Urgency banner */}
         <div
           style={{
+            display: "inline-block",
+            padding: "8px 20px",
+            borderRadius: 999,
+            border: `1px solid ${THEME.accent}44`,
+            background: `${THEME.accent}0a`,
             fontFamily: LABEL_FONT,
             fontSize: "0.82rem",
             color: THEME.muted,
-            marginBottom: 20,
+            marginBottom: 24,
           }}
         >
-          Points program closing Q3 2026.{" "}
+          Points program closing Q3 2026 —{" "}
           <span style={{ color: THEME.accent, fontWeight: 700 }}>
-            {weeksLeft} weeks remaining.
+            {weeksLeft} weeks remaining
           </span>
         </div>
+
+        <h2
+          style={{
+            fontFamily: FONTS.heading,
+            fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
+            fontWeight: 700,
+            color: THEME.text,
+            lineHeight: 1.2,
+            marginBottom: 16,
+          }}
+        >
+          Every week you wait is points you miss
+        </h2>
+
+        <p
+          style={{
+            fontSize: "0.95rem",
+            color: `${THEME.text}88`,
+            maxWidth: 500,
+            margin: "0 auto 28px",
+            lineHeight: 1.6,
+          }}
+        >
+          The earlier you start, the higher your share of the airdrop. With zero
+          fees, there's literally no cost to trading.
+        </p>
 
         <div
           style={{
             fontFamily: FONTS.mono,
             fontSize: "0.85rem",
             color: THEME.muted,
-            marginBottom: 8,
+            marginBottom: 12,
           }}
         >
           Referral Code
         </div>
-        <div
-          style={{
-            fontFamily: FONTS.mono,
-            fontSize: "clamp(1.2rem, 3vw, 1.6rem)",
-            fontWeight: 700,
-            color: THEME.accent,
-            letterSpacing: "0.1em",
-            marginBottom: 32,
-            userSelect: "all",
-          }}
-        >
-          {REFERRAL_CODE}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+          <CopyCode code={REFERRAL_CODE} theme={THEME} fonts={FONTS} />
         </div>
 
         <a
