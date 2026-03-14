@@ -34,7 +34,7 @@ export default function AirdropCalculator({ theme, fonts }) {
   const weeksRemaining = getWeeksRemaining();
 
   const results = useMemo(() => {
-    const tokenPool = fdv * 0.5;
+    const tokenPool = fdv * 0.1; // ~10% community allocation
     const valuePerPoint = tokenPool / totalPoints;
     const currentValue = userPoints * valuePerPoint;
     const projectedPoints = (weeklyVolume / 1_000_000) * pointsRate * weeksRemaining;
