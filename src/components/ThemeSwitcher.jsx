@@ -167,7 +167,7 @@ export default function ThemeSwitcher() {
             background: current.color,
           }}
         />
-        Themes
+        Explore
         <span style={{ fontSize: "0.65rem", opacity: 0.5 }}>{open ? "▼" : "▲"}</span>
       </button>
     </div>
