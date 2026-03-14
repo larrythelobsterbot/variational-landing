@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
+import CopyCode from "../../components/CopyCode.jsx";
+import ToolButtons from "../../components/ToolButtons.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -9,7 +11,7 @@ import {
   getWeeksRemaining,
 } from "../../config.js";
 
-/* ── Theme tokens ─────────────────────────────────────────── */
+/* ── Theme tokens ───────────────────────────────────────────────── */
 const THEME = {
   bg: "#0a0a0a",
   text: "#00ff88",
@@ -24,7 +26,7 @@ const FONTS = {
   body: "'JetBrains Mono', 'Fira Code', monospace",
 };
 
-/* ── Keyframe injection (once) ────────────────────────────── */
+/* ── Keyframe injection (once) ────────────────────────────────── */
 const STYLE_ID = "terminal-theme-keyframes";
 function injectKeyframes() {
   if (document.getElementById(STYLE_ID)) return;
@@ -84,7 +86,7 @@ function injectKeyframes() {
   document.head.appendChild(style);
 }
 
-/* ── Animated counter hook ────────────────────────────────── */
+/* ── Animated counter hook ───────────────────────────────────── */
 function useCountUp(target, duration = 1500, trigger = false) {
   const [value, setValue] = useState(0);
   const rafRef = useRef(null);
@@ -109,7 +111,7 @@ function useCountUp(target, duration = 1500, trigger = false) {
   return value;
 }
 
-/* ── IntersectionObserver hook ────────────────────────────── */
+/* ── IntersectionObserver hook ──────────────────────────────── */
 function useInView(options = {}) {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -133,7 +135,7 @@ function useInView(options = {}) {
   return [ref, inView];
 }
 
-/* ── Scanline overlay component ───────────────────────────── */
+/* ── Scanline overlay component ─────────────────────────────── */
 function ScanlineOverlay() {
   return (
     <div
@@ -176,7 +178,7 @@ function ScanlineOverlay() {
   );
 }
 
-/* ── Typewriter component ─────────────────────────────────── */
+/* ── Typewriter component ────────────────────────────────────── */
 const TYPE_COMMAND = "> ./trade --zero-fees --zero-slippage --stealth-mode";
 const RESPONSES = [
   "[OK] Connected to Variational RFQ Engine",
@@ -273,7 +275,7 @@ function Typewriter({ onComplete }) {
   );
 }
 
-/* ── Section label component ──────────────────────────────── */
+/* ── Section label component ──────────────────────────────────── */
 function SectionLabel({ children }) {
   return (
     <div
@@ -290,7 +292,7 @@ function SectionLabel({ children }) {
   );
 }
 
-/* ── Stat card with animated counter ──────────────────────── */
+/* ── Stat card with animated counter ───────────────────────────── */
 function StatCard({ prefix, value, suffix, label, inView }) {
   const count = useCountUp(value, 1500, inView);
   return (
@@ -330,7 +332,7 @@ function StatCard({ prefix, value, suffix, label, inView }) {
   );
 }
 
-/* ── Feature card (terminal output block) ─────────────────── */
+/* ── Feature card (terminal output block) ──────────────────────── */
 function FeatureCard({ title, description, detail }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -388,7 +390,7 @@ function FeatureCard({ title, description, detail }) {
   );
 }
 
-/* ── CTA Button ───────────────────────────────────────────── */
+/* ── CTA Button ────────────────────────────────────────────────────── */
 function CTAButton({ children, href, large }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -418,7 +420,7 @@ function CTAButton({ children, href, large }) {
   );
 }
 
-/* ── Step component ───────────────────────────────────────── */
+/* ── Step component ─────────────────────────────────────────────────── */
 function StepCommand({ number, command, description }) {
   return (
     <div style={{ marginBottom: 28 }}>
@@ -562,7 +564,7 @@ export default function TerminalTheme() {
             hand.
           </p>
 
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
             <CTAButton href={REFERRAL_LINK} large>
               [ START TRADING ] {"\u2192"}
             </CTAButton>
@@ -591,6 +593,9 @@ export default function TerminalTheme() {
             >
               ./calculate-airdrop
             </a>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <ToolButtons theme={THEME} fonts={FONTS} layout="row" />
           </div>
         </div>
       </section>
