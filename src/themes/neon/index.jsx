@@ -2,6 +2,9 @@ import { useEffect } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
+import CopyCode from "../../components/CopyCode.jsx";
+import ToolButtons from "../../components/ToolButtons.jsx";
+import SocialProof from "../../components/SocialProof.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -417,6 +420,9 @@ export default function NeonTheme() {
             Airdrop Calculator
           </a>
         </div>
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+          <ToolButtons theme={THEME} fonts={FONTS} layout="row" />
+        </div>
       </section>
 
       {/* ===== STATS ===== */}
@@ -781,24 +787,7 @@ export default function NeonTheme() {
 
               {s.showCode ? (
                 <div style={{ position: "relative", zIndex: 1 }}>
-                  <div
-                    style={{
-                      fontFamily: FONTS.heading,
-                      fontSize: "clamp(1rem, 2.5vw, 1.3rem)",
-                      fontWeight: 700,
-                      color: THEME.accent,
-                      background: `${THEME.accent}12`,
-                      border: `1px solid ${THEME.accent}33`,
-                      borderRadius: 10,
-                      padding: "14px 18px",
-                      textAlign: "center",
-                      letterSpacing: "0.08em",
-                      userSelect: "all",
-                      wordBreak: "break-all",
-                    }}
-                  >
-                    {REFERRAL_CODE}
-                  </div>
+                  <CopyCode code={REFERRAL_CODE} theme={THEME} fonts={FONTS} />
                   <div
                     style={{
                       fontSize: "0.78rem",
@@ -807,7 +796,7 @@ export default function NeonTheme() {
                       textAlign: "center",
                     }}
                   >
-                    Use this access code when you connect
+                    Click to copy — use this code when you connect
                   </div>
                 </div>
               ) : (
