@@ -30,17 +30,18 @@ export default function AirdropCalculator({ theme, fonts }) {
   const [totalPoints, setTotalPoints] = useState(9_500_000);
   const [weeklyVolume, setWeeklyVolume] = useState(1_000_000);
   const [pointsRate, setPointsRate] = useState(5);
+  const [communityPct, setCommunityPct] = useState(10);
 
   const weeksRemaining = getWeeksRemaining();
 
   const results = useMemo(() => {
-    const tokenPool = fdv * 0.1; // ~10% community allocation
+    const tokenPool = fdv * (communityPct / 100);
     const valuePerPoint = tokenPool / totalPoints;
     const currentValue = userPoints * valuePerPoint;
     const projectedPoints = (weeklyVolume / 1_000_000) * pointsRate * weeksRemaining;
     const projectedValue = projectedPoints * valuePerPoint;
     return { valuePerPoint, currentValue, projectedPoints, projectedValue };
-  }, [fdv, userPoints, totalPoints, weeklyVolume, pointsRate, weeksRemaining]);
+  }, [fdv, userPoints, totalPoints, weeklyVolume, pointsRate, weeksRemaining, communityPct]);
 
   const sectionStyle = {
     fontFamily: fonts.body,
@@ -156,6 +157,24 @@ export default function AirdropCalculator({ theme, fonts }) {
         ))}
       </div>
 
+      {/* Community Allocation */}
+      <div style={labelStyle}>Community Allocation: {communityPct}%</div>
+      <div style={sliderWrap}>
+        <input
+          type="range"
+          min={5}
+          max={30}
+          step={1}
+          value={communityPct}
+          onChange={(e) => setCommunityPct(Number(e.target.value))}
+          style={{ width: "100%", accentColor: t.accent }}
+        />
+        <div style={sliderLabel}>
+          <span>5%</span>
+          <span>30%</span>
+        </div>
+      </div>
+
       {/* Your Current Points */}
       <div style={labelStyle}>Your Current Points</div>
       <input
@@ -259,7 +278,7 @@ export default function AirdropCalculator({ theme, fonts }) {
       </div>
 
       <div style={disclaimer}>
-        Estimates only. Default points rate (~5 pts/$1M) calibrated from observed trader data. Actual
+        Estimates only. Community allocation set to {communityPct}% (adjustable above). Default points rate (~5 pts/$1M) calibrated from observed trader data. Actual
         rates depend on weekly platform activity and reward tier. Not financial advice.
       </div>
     </div>

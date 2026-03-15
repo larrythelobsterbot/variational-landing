@@ -1,12 +1,15 @@
+import { useState, useEffect } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
 import CopyCode from "../../components/CopyCode.jsx";
 import ToolButtons from "../../components/ToolButtons.jsx";
 import SocialProof from "../../components/SocialProof.jsx";
+import AnimatedCounter from "../../components/AnimatedCounter.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
+  RATES_API_BASE,
   MARKET_DATA,
   getWeeksRemaining,
 } from "../../config.js";
@@ -149,19 +152,55 @@ const STEPS = [
   },
 ];
 
-/* ---------- Stats data ---------- */
+/* ---------- Stats helpers ---------- */
 
-const STATS = [
-  { value: MARKET_DATA.variational.cumulativeVolume, label: "Cumulative Volume" },
-  { value: MARKET_DATA.variational.openInterest, label: "Open Interest" },
-  { value: MARKET_DATA.variational.markets, label: "Markets" },
-  { value: MARKET_DATA.variational.refunded, label: "Losses Refunded" },
-];
+function formatVolume(n) {
+  if (n >= 1e12) return { value: +(n / 1e12).toFixed(1), suffix: "T+" };
+  if (n >= 1e9) return { value: +(n / 1e9).toFixed(0), suffix: "B+" };
+  if (n >= 1e6) return { value: +(n / 1e6).toFixed(0), suffix: "M+" };
+  return { value: Math.round(n), suffix: "" };
+}
 
 /* ---------- Component ---------- */
 
 export default function OriginalTheme() {
   const weeksLeft = getWeeksRemaining();
+
+  /* Live stats from DefiLlama via our API */
+  const [liveStats, setLiveStats] = useState(null);
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const [protoRes, sumRes] = await Promise.all([
+          fetch(`${RATES_API_BASE}/api/compare/protocols`),
+          fetch(`${RATES_API_BASE}/api/compare/summary`),
+        ]);
+        const protoData = await protoRes.json();
+        const sumData = await sumRes.json();
+        const variational = (protoData.protocols || []).find(
+          (p) => p.slug === "variational"
+        );
+        if (variational) {
+          setLiveStats({
+            cumVol: variational.cumulative_volume,
+            vol24h: variational.volume_24h,
+            markets: variational.markets_count,
+            marketShare: sumData.variational_market_share_pct,
+          });
+        }
+      } catch (e) {
+        /* fallback to static */
+      }
+    }
+    fetchStats();
+  }, []);
+
+  /* Build stats array — live if available, static fallback */
+  const cumVol = liveStats?.cumVol;
+  const cumVolFmt = cumVol ? formatVolume(cumVol) : { value: 175, suffix: "B+" };
+  const vol24hFmt = liveStats?.vol24h
+    ? formatVolume(liveStats.vol24h)
+    : { value: 700, suffix: "M+" };
 
   return (
     <div
@@ -243,7 +282,7 @@ export default function OriginalTheme() {
           <ToolButtons theme={THEME} fonts={FONTS} layout="row" />
         </div>
 
-        {/* Stats bar */}
+        {/* Stats bar — animated counters with live data */}
         <div
           style={{
             display: "grid",
@@ -255,18 +294,25 @@ export default function OriginalTheme() {
             borderBottom: `1px solid ${THEME.muted}22`,
           }}
         >
-          {STATS.map((s) => (
+          {[
+            { prefix: "$", value: cumVolFmt.value, suffix: cumVolFmt.suffix, label: "Cumulative Volume" },
+            { prefix: "$", value: vol24hFmt.value, suffix: vol24hFmt.suffix, label: "24h Volume" },
+            { prefix: "~", value: 500, suffix: "", label: "Markets" },
+            { prefix: "$", value: 4, suffix: "M+", label: "Losses Refunded" },
+          ].map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
-              <div
+              <AnimatedCounter
+                value={s.value}
+                prefix={s.prefix}
+                suffix={s.suffix}
+                duration={1800}
                 style={{
                   fontFamily: FONTS.mono,
                   fontSize: "clamp(1.4rem, 3vw, 1.8rem)",
                   fontWeight: 700,
                   color: THEME.accent,
                 }}
-              >
-                {s.value}
-              </div>
+              />
               <div
                 style={{
                   fontFamily: LABEL_FONT,
@@ -616,20 +662,22 @@ export default function OriginalTheme() {
             marginBottom: 16,
           }}
         >
-          Every week you wait is points you miss
+          Zero fees. Zero risk. What are you waiting for?
         </h2>
 
         <p
           style={{
             fontSize: "0.95rem",
             color: `${THEME.text}88`,
-            maxWidth: 500,
+            maxWidth: 540,
             margin: "0 auto 28px",
             lineHeight: 1.6,
           }}
         >
-          The earlier you start, the higher your share of the airdrop. With zero
-          fees, there's literally no cost to trading.
+          Variational charges no trading fees — ever. And if you lose money,
+          the protocol's loss refund program has already returned{" "}
+          <span style={{ color: THEME.accent, fontWeight: 600 }}>$4M+ to traders</span>.
+          Start trading now and accumulate points toward the $VAR airdrop.
         </p>
 
         <div
