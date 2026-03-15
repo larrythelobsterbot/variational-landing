@@ -1,62 +1,259 @@
 import { useEffect } from "react";
 
+const SITE_URL = "https://tryvariational.xyz";
+
 /**
- * Sets document.title and meta description per route.
+ * SEO-optimised <head> manager.
+ * Updates title, meta description, canonical, Open Graph, Twitter Card,
+ * and JSON-LD structured data per route.
  */
 const PAGE_META = {
   "/": {
-    title: "Trade Perpetuals with Zero Fees | Variational",
+    title: "Trade 500+ Perpetuals with Zero Fees | Variational on Arbitrum",
     description:
-      "Trade 500+ perpetual markets with zero fees, zero slippage, and complete execution privacy on Variational's RFQ engine. Built on Arbitrum.",
+      "Trade perpetual futures on Variational with zero fees, zero slippage, and private execution. Earn points toward the $VAR airdrop. Built on Arbitrum.",
+    og: {
+      title: "Trade 500+ Perpetuals with Zero Fees | Variational",
+      description:
+        "Zero fees. Zero slippage. Private execution. 500+ perpetual markets on Arbitrum with a loss refund protocol.",
+      image: `${SITE_URL}/og-image.svg`,
+    },
+    twitter: {
+      title: "Trade 500+ Perpetuals with Zero Fees | Variational",
+      description:
+        "500+ perp markets. Zero fees. Zero slippage. Total privacy. Loss refunds. Built on Arbitrum.",
+    },
+    jsonLd: null, // homepage uses Organization schema injected separately
   },
   "/terminal": {
     title: "Trade in the Dark | Variational Terminal",
     description:
       "Zero fees. Zero slippage. Total stealth. Trade 500+ perpetual markets on Variational's private RFQ engine.",
+    og: {
+      title: "Trade in the Dark | Variational Terminal",
+      description:
+        "Zero-fee perpetual trading with complete privacy. No front-running, no visible orders.",
+      image: `${SITE_URL}/og-image.svg`,
+    },
+    twitter: {
+      title: "Trade in the Dark | Variational Terminal",
+      description:
+        "Zero-fee perpetual trading with complete privacy. No front-running, no visible orders.",
+    },
+    jsonLd: null,
   },
   "/bloomberg": {
     title: "Market Brief | Variational Protocol Analysis",
     description:
       "Bloomberg-style analysis of Variational's zero-fee perpetual trading infrastructure on Arbitrum.",
+    og: {
+      title: "Market Brief | Variational Protocol Analysis",
+      description:
+        "In-depth protocol analysis: volume, open interest, funding rates, token valuation scenarios.",
+      image: `${SITE_URL}/og-image.svg`,
+    },
+    twitter: {
+      title: "Market Brief | Variational Protocol Analysis",
+      description:
+        "In-depth protocol analysis: volume, open interest, funding rates, token valuation scenarios.",
+    },
+    jsonLd: null,
   },
   "/neon": {
     title: "Your Edge Stays Invisible | Variational",
     description:
       "Private execution, zero slippage, zero fees. Trade 500+ perpetual markets where your strategy stays yours.",
+    og: {
+      title: "Your Edge Stays Invisible | Variational",
+      description:
+        "Private execution, zero slippage, zero fees. Your strategy stays yours.",
+      image: `${SITE_URL}/og-image.svg`,
+    },
+    twitter: {
+      title: "Your Edge Stays Invisible | Variational",
+      description:
+        "Private execution, zero slippage, zero fees. Your strategy stays yours.",
+    },
+    jsonLd: null,
   },
   "/rates": {
-    title: "Funding Rate Arbitrage Scanner | Variational Tools",
+    title:
+      "Funding Rate Comparison Tool | Compare CEX & DEX Rates | Variational",
     description:
-      "Live funding rate arbitrage opportunities between Variational and CEXs. Find spreads and estimate daily PnL.",
+      "Compare live funding rates across every major CEX and DEX. Find delta-neutral arbitrage opportunities and farm yield with Variational's funding rate dashboard.",
+    og: {
+      title: "Funding Rate Comparison Tool | Variational",
+      description:
+        "Live funding rate spreads between Variational and CEX/DEX exchanges. Spot delta-neutral arb opportunities instantly.",
+      image: `${SITE_URL}/og-rates.svg`,
+    },
+    twitter: {
+      title: "Funding Rate Comparison Tool | Variational",
+      description:
+        "Compare live funding rates across every major CEX and DEX. Find the best delta-neutral arb opportunities.",
+    },
+    jsonLd: {
+      "@type": "WebApplication",
+      name: "Variational Funding Rate Comparison Tool",
+      description:
+        "Live funding rate comparison dashboard across major CEX and DEX exchanges for delta-neutral arbitrage.",
+      url: `${SITE_URL}/rates`,
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+    },
   },
   "/compare": {
-    title: "Perp DEX Comparison | Variational Tools",
+    title:
+      "Perp DEX Comparison | Compare Top Derivatives Protocols | Variational",
     description:
-      "Live comparison of perpetual DEX protocols — volume, open interest, fees, TVL. Data from DefiLlama.",
+      "Side-by-side comparison of top perpetual DEX protocols. Live data from DefiLlama showing volume, fees, markets, and more.",
+    og: {
+      title: "Perp DEX Comparison | Variational",
+      description:
+        "Compare top perp DEX protocols side by side. Live volume, OI, fees, and market data from DefiLlama.",
+      image: `${SITE_URL}/og-compare.svg`,
+    },
+    twitter: {
+      title: "Perp DEX Comparison | Variational",
+      description:
+        "Compare top perp DEX protocols side by side. Live volume, OI, fees, and market data.",
+    },
+    jsonLd: {
+      "@type": "WebApplication",
+      name: "Variational Perp DEX Comparison Tool",
+      description:
+        "Live comparison of perpetual DEX protocols by volume, open interest, fees, and TVL.",
+      url: `${SITE_URL}/compare`,
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+    },
   },
   "/liquidations": {
-    title: "Liquidation Heatmap | Variational Tools",
+    title:
+      "Crypto Liquidations Tracker | Live Liquidation Data | Variational",
     description:
-      "Real-time liquidation level monitor across major perpetual markets. Visualize risk zones by leverage.",
+      "Track real-time crypto liquidations across major exchanges. Monitor liquidation events, heatmaps, and market sentiment.",
+    og: {
+      title: "Crypto Liquidations Tracker | Variational",
+      description:
+        "Real-time crypto liquidation data and heatmaps across major perpetual exchanges.",
+      image: `${SITE_URL}/og-liquidations.svg`,
+    },
+    twitter: {
+      title: "Crypto Liquidations Tracker | Variational",
+      description:
+        "Real-time crypto liquidation data and heatmaps across major perpetual exchanges.",
+    },
+    jsonLd: {
+      "@type": "WebApplication",
+      name: "Variational Crypto Liquidations Tracker",
+      description:
+        "Real-time liquidation monitoring and heatmap visualization across major perpetual exchanges.",
+      url: `${SITE_URL}/liquidations`,
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+    },
   },
 };
+
+/* Organisation schema — injected on every page */
+const ORG_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Variational",
+  url: SITE_URL,
+  description:
+    "Peer-to-peer derivatives protocol on Arbitrum with zero fees, zero slippage, and private RFQ execution.",
+  sameAs: [
+    "https://x.com/variaboreal",
+    "https://discord.gg/variational",
+  ],
+};
+
+function setMetaTag(attr, key, content) {
+  let el = document.querySelector(`meta[${attr}="${key}"]`);
+  if (!el) {
+    el = document.createElement("meta");
+    el.setAttribute(attr, key);
+    document.head.appendChild(el);
+  }
+  el.setAttribute("content", content);
+}
+
+function setJsonLd(id, data) {
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement("script");
+    el.id = id;
+    el.type = "application/ld+json";
+    document.head.appendChild(el);
+  }
+  el.textContent = JSON.stringify(data);
+}
 
 export default function PageMeta({ path }) {
   useEffect(() => {
     const meta = PAGE_META[path] || PAGE_META["/"];
+
+    /* Title */
     document.title = meta.title;
 
-    let descTag = document.querySelector('meta[name="description"]');
-    if (descTag) {
-      descTag.setAttribute("content", meta.description);
-    }
+    /* Description */
+    setMetaTag("name", "description", meta.description);
 
+    /* Canonical */
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (canonicalTag) {
       canonicalTag.setAttribute(
         "href",
-        `https://tryvariational.xyz${path === "/" ? "" : path}`
+        `${SITE_URL}${path === "/" ? "" : path}`
       );
+    }
+
+    /* Open Graph */
+    setMetaTag("property", "og:title", meta.og.title);
+    setMetaTag("property", "og:description", meta.og.description);
+    setMetaTag("property", "og:image", meta.og.image);
+    setMetaTag("property", "og:url", `${SITE_URL}${path === "/" ? "" : path}`);
+    setMetaTag("property", "og:type", "website");
+
+    /* Twitter Card */
+    setMetaTag("name", "twitter:card", "summary_large_image");
+    setMetaTag("name", "twitter:title", meta.twitter.title);
+    setMetaTag("name", "twitter:description", meta.twitter.description);
+    setMetaTag(
+      "name",
+      "twitter:image",
+      meta.og.image /* reuse OG image for twitter */
+    );
+
+    /* JSON-LD: Organisation (always present) */
+    setJsonLd("ld-org", ORG_SCHEMA);
+
+    /* JSON-LD: Page-specific (WebApplication for tool pages) */
+    if (meta.jsonLd) {
+      setJsonLd("ld-page", {
+        "@context": "https://schema.org",
+        ...meta.jsonLd,
+      });
+    } else {
+      const existing = document.getElementById("ld-page");
+      if (existing) existing.remove();
     }
   }, [path]);
 

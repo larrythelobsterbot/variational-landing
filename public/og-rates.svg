@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0c0b09"/>
+  <!-- Subtle grid -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#a8996812" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <!-- Accent line top -->
+  <rect x="0" y="0" width="1200" height="3" fill="#fbbf24"/>
+  <!-- Chart visualization -->
+  <polyline points="80,420 160,380 240,350 320,290 400,310 480,260 560,220 640,240 720,180 800,190 880,150 960,120 1040,140 1120,100" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="80,440 160,445 240,435 320,450 400,442 480,448 560,438 640,445 720,440 800,435 880,442 960,438 1040,440 1120,435" fill="none" stroke="#a89968" stroke-width="2" stroke-dasharray="6,4" stroke-linecap="round"/>
+  <!-- Spread area -->
+  <polygon points="80,420 160,380 240,350 320,290 400,310 480,260 560,220 640,240 720,180 800,190 880,150 960,120 1040,140 1120,100 1120,435 1040,440 960,438 880,442 800,435 720,440 640,445 560,438 480,448 400,442 320,450 240,435 160,445 80,440" fill="#fbbf2410"/>
+  <!-- Label: tool badge -->
+  <rect x="80" y="60" rx="4" ry="4" width="180" height="28" fill="#fbbf2418" stroke="#fbbf2444" stroke-width="1"/>
+  <text x="170" y="80" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#fbbf24" letter-spacing="0.08em">FUNDING RATES</text>
+  <!-- Title -->
+  <text x="80" y="140" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#e8e0d0">Compare Funding Rates</text>
+  <text x="80" y="195" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#e8e0d0">Across CEX &amp; DEX</text>
+  <!-- Subtitle -->
+  <text x="80" y="240" font-family="system-ui, sans-serif" font-size="20" fill="#a89968">Find delta-neutral arb opportunities. Farm yield. Stack points.</text>
+  <!-- Legend -->
+  <line x1="80" y1="520" x2="110" y2="520" stroke="#fbbf24" stroke-width="3"/>
+  <text x="120" y="525" font-family="monospace" font-size="13" fill="#a89968">Variational Rate</text>
+  <line x1="280" y1="520" x2="310" y2="520" stroke="#a89968" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="320" y="525" font-family="monospace" font-size="13" fill="#a89968">CEX Avg Rate</text>
+  <!-- Domain -->
+  <text x="1120" y="580" text-anchor="end" font-family="monospace" font-size="14" fill="#a8996866">tryvariational.xyz/rates</text>
+</svg>
