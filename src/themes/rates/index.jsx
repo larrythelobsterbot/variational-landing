@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Footer from "../../components/Footer.jsx";
 import {
   REFERRAL_LINK,
@@ -264,6 +264,80 @@ function exchangeAbbr(name) {
   return map[(name || "").toLowerCase()] || name.toUpperCase().slice(0, 3);
 }
 
+function exchangeFullName(name) {
+  const map = { binance: "Binance", bybit: "Bybit", hyperliquid: "Hyperliquid", okx: "OKX", gateio: "Gate.io", bitget: "Bitget" };
+  return map[(name || "").toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/* ─── CEX Fee Tables (hardcoded) ─────────────────────────────────── */
+const CEX_FEES = {
+  binance:      { maker: 0.0200, taker: 0.0500, name: "Binance",      fundingInterval: 8 },
+  bybit:        { maker: 0.0200, taker: 0.0550, name: "Bybit",        fundingInterval: 8 },
+  hyperliquid:  { maker: 0.0200, taker: 0.0500, name: "Hyperliquid",  fundingInterval: 8 },
+  okx:          { maker: 0.0200, taker: 0.0500, name: "OKX",          fundingInterval: 8 },
+  gateio:       { maker: 0.0200, taker: 0.0500, name: "Gate.io",      fundingInterval: 8 },
+  bitget:       { maker: 0.0200, taker: 0.0600, name: "Bitget",       fundingInterval: 8 },
+};
+
+const VAR_FEES = { maker: 0, taker: 0, name: "Variational", fundingInterval: 1 };
+
+/* ─── Trade Plan Calculator ──────────────────────────────────────── */
+function calcTradePlan(opp, notional) {
+  const cexFees = CEX_FEES[(opp.cex_exchange || "").toLowerCase()] || { maker: 0.05, taker: 0.05, name: opp.cex_exchange, fundingInterval: 8 };
+  const halfNotional = notional / 2;
+
+  // Position sizing: split notional across both legs
+  const varPositionUSD = halfNotional;
+  const cexPositionUSD = halfNotional;
+  const varPositionSize = opp.var_mark_price > 0 ? varPositionUSD / opp.var_mark_price : 0;
+  const cexPositionSize = opp.var_mark_price > 0 ? cexPositionUSD / opp.var_mark_price : 0;
+
+  // Entry costs (taker fees for both legs)
+  const varEntryCost = varPositionUSD * (VAR_FEES.taker / 100); // 0 for Variational
+  const cexEntryCost = cexPositionUSD * (cexFees.taker / 100);
+  const totalEntryCost = varEntryCost + cexEntryCost;
+
+  // Exit costs (same as entry)
+  const totalExitCost = totalEntryCost;
+  const totalRoundTripCost = totalEntryCost + totalExitCost;
+
+  // Gas cost estimate (Arbitrum)
+  const estimatedGasCost = 0.50; // ~$0.50 per tx on Arbitrum
+  const totalGas = estimatedGasCost * 2; // open + close
+
+  // Daily funding income from spread
+  const spreadAnnual = opp.spread_annual || 0;
+  const dailyFundingIncome = (notional * spreadAnnual / 100) / 365;
+
+  // Net daily P&L (spread income minus any ongoing costs)
+  const netDailyPnL = dailyFundingIncome;
+
+  // Break-even: days to recover entry+exit+gas costs
+  const totalCosts = totalRoundTripCost + totalGas;
+  const breakEvenDays = netDailyPnL > 0 ? totalCosts / netDailyPnL : Infinity;
+
+  // Projected P&L at various horizons
+  const pnl7d  = (netDailyPnL * 7)  - totalCosts;
+  const pnl30d = (netDailyPnL * 30) - totalCosts;
+  const pnl90d = (netDailyPnL * 90) - totalCosts;
+
+  // Direction labels
+  const isShortVar = opp.direction === "short_var_long_cex";
+  const varSide = isShortVar ? "SHORT" : "LONG";
+  const cexSide = isShortVar ? "LONG" : "SHORT";
+
+  return {
+    varPositionUSD, cexPositionUSD, varPositionSize, cexPositionSize,
+    varEntryCost, cexEntryCost, totalEntryCost, totalExitCost, totalRoundTripCost,
+    totalGas, estimatedGasCost,
+    dailyFundingIncome, netDailyPnL,
+    breakEvenDays, totalCosts,
+    pnl7d, pnl30d, pnl90d,
+    varSide, cexSide,
+    cexFees, varFees: VAR_FEES,
+  };
+}
+
 function formatDirection(direction, cex) {
   if (!direction) return "-";
   const abbr = exchangeAbbr(cex);
@@ -483,12 +557,268 @@ function Hero() {
 }
 
 /* ═════════════════════════════════════════════════════════════════════
+   5a. MINI HISTORY CHART (for expanded panel)
+   ═════════════════════════════════════════════════════════════════════ */
+function MiniHistoryChart({ ticker }) {
+  const { series, loading } = useHistoricalRates(ticker);
+  const W = 360, H = 120;
+  const PAD = { top: 12, right: 8, bottom: 24, left: 40 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const exColors = { variational: THEME.accent, binance: "#e8e0d0", bybit: "#60a5fa", hyperliquid: "#a855f7" };
+
+  const chartData = useMemo(() => {
+    if (!series) return null;
+    const allRates = [];
+    for (const key of Object.keys(series)) {
+      for (const pt of series[key]) allRates.push(pt.rate);
+    }
+    if (allRates.length === 0) return null;
+    const minR = Math.min(...allRates), maxR = Math.max(...allRates);
+    const range = maxR - minR || 1;
+    const padded = { min: minR - range * 0.08, max: maxR + range * 0.08 };
+    const totalRange = padded.max - padded.min || 1;
+    function toPath(points) {
+      return points.map((pt, i) => {
+        const x = PAD.left + (i / (points.length - 1)) * plotW;
+        const y = PAD.top + plotH - ((pt.rate - padded.min) / totalRange) * plotH;
+        return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+    }
+    const paths = {};
+    for (const [key, points] of Object.entries(series)) paths[key] = toPath(points);
+    const yTicks = [];
+    const step = totalRange / 3;
+    for (let i = 0; i <= 3; i++) {
+      const val = padded.min + step * i;
+      const y = PAD.top + plotH - (i / 3) * plotH;
+      yTicks.push({ val, y });
+    }
+    return { paths, yTicks };
+  }, [series]);
+
+  if (loading || !chartData) {
+    return (<div style={{ height: H, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONTS.mono, fontSize: "0.65rem", color: THEME.muted }}>LOADING...</div>);
+  }
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+        {chartData.yTicks.map((tick, i) => (
+          <g key={i}>
+            <line x1={PAD.left} y1={tick.y} x2={W - PAD.right} y2={tick.y} stroke={`${THEME.muted}18`} strokeWidth={1} />
+            <text x={PAD.left - 4} y={tick.y + 3} textAnchor="end" fill={THEME.muted} fontFamily={FONTS.mono} fontSize={8}>{tick.val.toFixed(0)}%</text>
+          </g>
+        ))}
+        {Object.entries(chartData.paths).map(([ex, path]) => (
+          <path key={ex} d={path} fill="none" stroke={exColors[ex] || THEME.text}
+            strokeWidth={ex === "variational" ? 2 : 1.2} strokeLinejoin="round" strokeLinecap="round"
+            opacity={ex === "variational" ? 1 : 0.6} />
+        ))}
+      </svg>
+      <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
+        {Object.entries(exColors).map(([name, color]) => (
+          <div key={name} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: FONTS.mono, fontSize: "0.58rem", color: THEME.muted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, display: "inline-block", flexShrink: 0 }} />
+            {name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   5b. TRADE PLAN PANEL (expandable row detail)
+   ═════════════════════════════════════════════════════════════════════ */
+function TradePlanPanel({ opportunity, onClose }) {
+  const [notional, setNotional] = useState(10000);
+  const notionalOptions = [5000, 10000, 25000, 50000, 100000];
+  const opp = opportunity;
+  const plan = useMemo(() => calcTradePlan(opp, notional), [opp, notional]);
+  const cexName = exchangeFullName(opp.cex_exchange);
+
+  const labelStyle = { fontFamily: FONTS.mono, fontSize: "0.6rem", fontWeight: 500, color: THEME.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 };
+  const valueStyle = { fontFamily: FONTS.mono, fontSize: "0.85rem", fontWeight: 700, color: THEME.text };
+  const cardStyle = { padding: "14px 16px", background: "#0f0e0b", border: `1px solid ${THEME.borderColor}` };
+  const notionalBtn = (n) => ({
+    fontFamily: FONTS.mono, fontSize: "0.68rem", fontWeight: notional === n ? 700 : 500,
+    color: notional === n ? "#000" : THEME.text,
+    background: notional === n ? THEME.accent : "transparent",
+    border: `1px solid ${notional === n ? THEME.accent : THEME.borderColor}`,
+    padding: "5px 12px", cursor: "pointer", letterSpacing: "0.04em",
+  });
+
+  return (
+    <div style={{ background: "#0c0b09", borderTop: `2px solid ${THEME.accent}`, padding: "24px 20px", animation: "rates-fade-in 0.25s ease" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontFamily: FONTS.mono, fontSize: "1rem", fontWeight: 700, color: THEME.accent, letterSpacing: "0.06em" }}>
+            {opp.ticker} TRADE PLAN
+          </span>
+          <span style={{ fontFamily: FONTS.mono, fontSize: "0.65rem", fontWeight: 600, color: THEME.positive, background: `${THEME.positive}18`, padding: "3px 8px", letterSpacing: "0.06em" }}>
+            {fmtRate(opp.spread_annual)} SPREAD
+          </span>
+        </div>
+        <button onClick={onClose} style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", fontWeight: 600, color: THEME.muted, background: "transparent", border: `1px solid ${THEME.borderColor}`, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em" }}>
+          CLOSE
+        </button>
+      </div>
+
+      {/* Notional selector */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={labelStyle}>TOTAL NOTIONAL</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 0 }}>
+          {notionalOptions.map((n) => (
+            <button key={n} onClick={() => setNotional(n)} style={notionalBtn(n)}>${(n / 1000).toFixed(0)}K</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main 3-column grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+
+        {/* Col 1: Position Setup */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ ...labelStyle, fontSize: "0.65rem", color: THEME.accent, marginBottom: 0 }}>POSITION SETUP</div>
+          {/* Leg 1 */}
+          <div style={cardStyle}>
+            <div style={labelStyle}>LEG 1: VARIATIONAL</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+              <span style={{ ...valueStyle, color: plan.varSide === "SHORT" ? THEME.negative : THEME.positive }}>{plan.varSide}</span>
+              <span style={{ ...valueStyle, fontSize: "0.78rem" }}>${plan.varPositionUSD.toLocaleString()}</span>
+            </div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: `${THEME.text}88` }}>
+              {plan.varPositionSize.toFixed(opp.var_mark_price < 1 ? 0 : opp.var_mark_price < 100 ? 2 : 4)} {opp.ticker} @ ${opp.var_mark_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: THEME.positive, marginTop: 6 }}>Trading fee: 0% (FREE)</div>
+          </div>
+          {/* Leg 2 */}
+          <div style={cardStyle}>
+            <div style={labelStyle}>LEG 2: {cexName.toUpperCase()}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+              <span style={{ ...valueStyle, color: plan.cexSide === "SHORT" ? THEME.negative : THEME.positive }}>{plan.cexSide}</span>
+              <span style={{ ...valueStyle, fontSize: "0.78rem" }}>${plan.cexPositionUSD.toLocaleString()}</span>
+            </div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: `${THEME.text}88` }}>
+              {plan.cexPositionSize.toFixed(opp.var_mark_price < 1 ? 0 : opp.var_mark_price < 100 ? 2 : 4)} {opp.ticker} @ ${opp.var_mark_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: THEME.muted, marginTop: 6 }}>Trading fee: {plan.cexFees.taker.toFixed(3)}% (taker)</div>
+          </div>
+          {/* Liquidity */}
+          <div style={cardStyle}>
+            <div style={labelStyle}>LIQUIDITY (24H VOLUME)</div>
+            <div style={{ ...valueStyle, color: THEME.accent }}>{fmtVolume(opp.volume_24h)}</div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.6rem", color: `${THEME.text}66`, marginTop: 4 }}>Variational 24h volume as liquidity proxy</div>
+          </div>
+        </div>
+
+        {/* Col 2: Costs & Returns */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ ...labelStyle, fontSize: "0.65rem", color: THEME.accent, marginBottom: 0 }}>COSTS & RETURNS</div>
+          <div style={cardStyle}>
+            <div style={labelStyle}>ENTRY COSTS</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: `${THEME.text}99` }}>Variational fee</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: THEME.positive }}>$0.00</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: `${THEME.text}99` }}>{cexName} fee</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: THEME.negative }}>-${plan.cexEntryCost.toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: `${THEME.text}99` }}>Est. gas (Arbitrum)</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: THEME.negative }}>-${plan.estimatedGasCost.toFixed(2)}</span>
+              </div>
+              <div style={{ borderTop: `1px solid ${THEME.borderColor}`, paddingTop: 4, marginTop: 2, display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", fontWeight: 600, color: THEME.text }}>Total entry</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", fontWeight: 700, color: THEME.negative }}>-${(plan.totalEntryCost + plan.estimatedGasCost).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          <div style={cardStyle}>
+            <div style={labelStyle}>EXIT COSTS (ESTIMATED)</div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", fontWeight: 600, color: THEME.text }}>Round-trip total</span>
+              <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", fontWeight: 700, color: THEME.negative }}>-${plan.totalCosts.toFixed(2)}</span>
+            </div>
+          </div>
+          <div style={cardStyle}>
+            <div style={labelStyle}>DAILY FUNDING INCOME</div>
+            <div style={{ ...valueStyle, fontSize: "1.1rem", color: THEME.positive }}>+${plan.dailyFundingIncome.toFixed(2)}/day</div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.6rem", color: `${THEME.text}66`, marginTop: 4 }}>From {fmtRate(opp.spread_annual)} annual spread on ${notional.toLocaleString()} notional</div>
+          </div>
+          <div style={{ ...cardStyle, borderColor: THEME.accent }}>
+            <div style={labelStyle}>BREAK-EVEN TIME</div>
+            <div style={{ ...valueStyle, fontSize: "1.1rem", color: THEME.accent }}>
+              {plan.breakEvenDays === Infinity ? "N/A" : plan.breakEvenDays < 1 ? `${Math.ceil(plan.breakEvenDays * 24)}h` : `${plan.breakEvenDays.toFixed(1)} days`}
+            </div>
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.6rem", color: `${THEME.text}66`, marginTop: 4 }}>To recover ${plan.totalCosts.toFixed(2)} in costs</div>
+          </div>
+        </div>
+
+        {/* Col 3: P&L Projections + Chart */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ ...labelStyle, fontSize: "0.65rem", color: THEME.accent, marginBottom: 0 }}>PROJECTED NET P&L</div>
+          <div style={{ ...cardStyle, display: "flex", flexDirection: "column", gap: 8 }}>
+            {[{ label: "7 DAYS", val: plan.pnl7d }, { label: "30 DAYS", val: plan.pnl30d }, { label: "90 DAYS", val: plan.pnl90d }].map((p) => (
+              <div key={p.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.68rem", color: THEME.muted, letterSpacing: "0.06em" }}>{p.label}</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.85rem", fontWeight: 700, color: p.val >= 0 ? THEME.positive : THEME.negative }}>
+                  {p.val >= 0 ? "+" : ""}{p.val.toFixed(2)}
+                </span>
+              </div>
+            ))}
+            <div style={{ fontFamily: FONTS.mono, fontSize: "0.58rem", color: `${THEME.text}55`, marginTop: 4 }}>Net of all trading fees and gas. Assumes current rates persist.</div>
+          </div>
+          <div style={cardStyle}>
+            <div style={labelStyle}>7D RATE HISTORY</div>
+            <MiniHistoryChart ticker={opp.ticker} />
+          </div>
+          <div style={cardStyle}>
+            <div style={labelStyle}>FEE REFERENCE</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: `${THEME.text}88` }}>Variational</span>
+                <span style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: THEME.positive }}>0% / 0%</span>
+              </div>
+              {Object.entries(CEX_FEES).map(([key, fees]) => (
+                <div key={key} style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: `${THEME.text}88` }}>{fees.name}</span>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: THEME.muted }}>{fees.maker.toFixed(3)}% / {fees.taker.toFixed(3)}%</span>
+                </div>
+              ))}
+              <div style={{ fontFamily: FONTS.mono, fontSize: "0.55rem", color: `${THEME.text}44`, marginTop: 3 }}>Maker / Taker (default tier, excl. VIP discounts)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <a href={REFERRAL_LINK} target="_blank" rel="noopener noreferrer"
+          style={{ ...ctaButton, padding: "10px 28px", fontSize: "0.82rem" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#f59e0b"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = THEME.accent; }}>
+          OPEN {opp.ticker} POSITION &rarr;
+        </a>
+        <span style={{ fontFamily: FONTS.mono, fontSize: "0.65rem", color: `${THEME.text}66` }}>
+          {plan.varSide} {opp.ticker} on Variational, {plan.cexSide} on {cexName}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ═════════════════════════════════════════════════════════════════════
    5. OPPORTUNITIES TABLE
    ═════════════════════════════════════════════════════════════════════ */
 function OpportunitiesTable({ opportunities }) {
   const [sortKey, setSortKey] = useState("spread_annual");
   const [sortDir, setSortDir] = useState("desc");
   const [showAll, setShowAll] = useState(false);
+  const [expandedTicker, setExpandedTicker] = useState(null);
 
   const sorted = useMemo(() => {
     const arr = [...opportunities];
@@ -511,6 +841,10 @@ function OpportunitiesTable({ opportunities }) {
     }
   }
 
+  const handleRowClick = useCallback((ticker) => {
+    setExpandedTicker((prev) => (prev === ticker ? null : ticker));
+  }, []);
+
   const columns = [
     { key: "ticker", label: "ASSET", sortable: true },
     { key: "volume_24h", label: "VAR VOL", sortable: true },
@@ -521,7 +855,7 @@ function OpportunitiesTable({ opportunities }) {
     { key: "direction", label: "DIRECTION", sortable: false },
     { key: "daily_pnl_10k", label: "$10K/DAY", sortable: true },
     { key: "daily_pnl_50k", label: "$50K/DAY", sortable: true },
-    { key: "action", label: "ACTION", sortable: false },
+    { key: "action", label: "", sortable: false },
   ];
 
   const thBase = {
@@ -558,7 +892,12 @@ function OpportunitiesTable({ opportunities }) {
     <section style={{ padding: "60px 0", borderBottom: `1px solid ${THEME.borderColor}` }}>
       <div style={container}>
         <div style={sectionLabel}>SECTION 02</div>
-        <div style={sectionTitle}>TOP OPPORTUNITIES</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+          <div style={sectionTitle}>TOP OPPORTUNITIES</div>
+          <div style={{ fontFamily: FONTS.mono, fontSize: "0.62rem", color: `${THEME.text}66`, letterSpacing: "0.06em", marginBottom: 24 }}>
+            Click any row for full trade plan
+          </div>
+        </div>
         <div
           style={{
             overflowX: "auto",
@@ -592,63 +931,84 @@ function OpportunitiesTable({ opportunities }) {
             </thead>
             <tbody>
               {visible.map((row, idx) => {
-                const rowBg = idx % 2 === 0 ? THEME.cardBg : "#1a1814";
+                const isExpanded = expandedTicker === row.ticker;
+                const rowBg = isExpanded ? "#1a1710" : (idx % 2 === 0 ? THEME.cardBg : "#1a1814");
                 return (
-                  <tr key={row.ticker + idx} style={{ background: rowBg }}>
-                    <td style={{ ...tdBase, fontWeight: 700, color: THEME.text }}>
-                      {row.ticker}
-                    </td>
-                    <td style={{ ...tdBase, color: THEME.muted, fontSize: "0.72rem" }}>
-                      {fmtVolume(row.volume_24h)}
-                    </td>
-                    <td style={{ ...tdBase, color: row.var_rate_annual >= 0 ? THEME.positive : THEME.negative }}>
-                      {fmtRate(row.var_rate_annual)}
-                    </td>
-                    <td style={{ ...tdBase, color: THEME.muted, fontSize: "0.72rem", letterSpacing: "0.06em" }}>
-                      {exchangeAbbr(row.cex_exchange)}
-                    </td>
-                    <td style={{ ...tdBase, color: row.cex_rate_annual >= 0 ? THEME.positive : THEME.negative }}>
-                      {fmtRate(row.cex_rate_annual)}
-                    </td>
-                    <td style={{ ...tdBase, color: THEME.accent, fontWeight: 700 }}>
-                      {fmtRate(row.spread_annual)}
-                    </td>
-                    <td style={{ ...tdBase, color: `${THEME.text}99`, fontSize: "0.72rem" }}>
-                      {formatDirection(row.direction, row.cex_exchange)}
-                    </td>
-                    <td style={{ ...tdBase, color: THEME.positive, fontWeight: 600 }}>
-                      {fmtDollar(row.daily_pnl_10k)}
-                    </td>
-                    <td style={{ ...tdBase, color: THEME.positive, fontWeight: 600 }}>
-                      {fmtDollar(row.daily_pnl_50k)}
-                    </td>
-                    <td style={{ ...tdBase }}>
-                      <a
-                        href={REFERRAL_LINK}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          fontFamily: FONTS.mono,
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          color: "#000",
-                          background: THEME.accent,
-                          padding: "5px 12px",
-                          borderRadius: 2,
-                          textDecoration: "none",
-                          letterSpacing: "0.04em",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        TRADE &rarr;
-                      </a>
-                    </td>
-                  </tr>
+                  <React.Fragment key={row.ticker + idx}>
+                    <tr
+                      style={{ background: rowBg, cursor: "pointer", transition: "background 0.15s" }}
+                      onClick={() => handleRowClick(row.ticker)}
+                      onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = "#1e1c16"; }}
+                      onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.background = rowBg; }}
+                    >
+                      <td style={{ ...tdBase, fontWeight: 700, color: THEME.text }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ display: "inline-block", width: 12, fontSize: "0.6rem", color: THEME.accent, transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>&#9654;</span>
+                          {row.ticker}
+                        </span>
+                      </td>
+                      <td style={{ ...tdBase, color: THEME.muted, fontSize: "0.72rem" }}>
+                        {fmtVolume(row.volume_24h)}
+                      </td>
+                      <td style={{ ...tdBase, color: row.var_rate_annual >= 0 ? THEME.positive : THEME.negative }}>
+                        {fmtRate(row.var_rate_annual)}
+                      </td>
+                      <td style={{ ...tdBase, color: THEME.muted, fontSize: "0.72rem", letterSpacing: "0.06em" }}>
+                        {exchangeAbbr(row.cex_exchange)}
+                      </td>
+                      <td style={{ ...tdBase, color: row.cex_rate_annual >= 0 ? THEME.positive : THEME.negative }}>
+                        {fmtRate(row.cex_rate_annual)}
+                      </td>
+                      <td style={{ ...tdBase, color: THEME.accent, fontWeight: 700 }}>
+                        {fmtRate(row.spread_annual)}
+                      </td>
+                      <td style={{ ...tdBase, color: `${THEME.text}99`, fontSize: "0.72rem" }}>
+                        {formatDirection(row.direction, row.cex_exchange)}
+                      </td>
+                      <td style={{ ...tdBase, color: THEME.positive, fontWeight: 600 }}>
+                        {fmtDollar(row.daily_pnl_10k)}
+                      </td>
+                      <td style={{ ...tdBase, color: THEME.positive, fontWeight: 600 }}>
+                        {fmtDollar(row.daily_pnl_50k)}
+                      </td>
+                      <td style={{ ...tdBase }}>
+                        <a
+                          href={REFERRAL_LINK}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            fontFamily: FONTS.mono,
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#000",
+                            background: THEME.accent,
+                            padding: "5px 12px",
+                            borderRadius: 2,
+                            textDecoration: "none",
+                            letterSpacing: "0.04em",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          TRADE &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 );
               })}
             </tbody>
           </table>
         </div>
+        {expandedTicker && (() => {
+          const expandedOpp = sorted.find(o => o.ticker === expandedTicker);
+          if (!expandedOpp) return null;
+          return (
+            <div style={{ border: `1px solid ${THEME.borderColor}`, borderTop: "none" }}>
+              <TradePlanPanel opportunity={expandedOpp} onClose={() => setExpandedTicker(null)} />
+            </div>
+          );
+        })()}
         {sorted.length > 15 && (
           <div style={{ textAlign: "center", marginTop: 16 }}>
             <button
