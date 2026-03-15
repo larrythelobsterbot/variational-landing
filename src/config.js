@@ -2,7 +2,7 @@ export let REFERRAL_CODE = "OMNIXOIXIBOD";
 export let REFERRAL_LINK = "https://omni.variational.io/?ref=OMNIXOIXIBOD";
 
 export const RATES_API_BASE =
-  import.meta.env.VITE_RATES_API_BASE || "https://rates.lekker.design";
+  import.meta.env.VITE_RATES_API_BASE || "";
 
 export function swapReferralCode(newCode) {
   REFERRAL_CODE = newCode;
